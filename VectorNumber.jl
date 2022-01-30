@@ -5,13 +5,10 @@ struct VNum{T}
     mag::T
     angles::Vector{T}
 
-    ϕ(n) = ϕ(n, n < 0 ? [pi] : [0])
-    ϕ(mag, angles::Vector) = VNum(mag, angles)
-    ϕ(mag, angles...) = VNum(mag, angles...)
     VNum(mag::T, angles::Vector{T}) where T = mag < 0 ? new{T}(-mag, (angles .+ pi) .% (2 * pi)) : new{T}(mag, (angles) .% (2 * pi))
-    VNum(mag::T, angles...) where T = VNum(mag, Array{T}(angles...))
+    VNum(mag::T, angles...) where T = VNum(mag, collect(angles))
 
-"""
+
     function VNum(coordinates::Vector{T}) where T
         mag::T = 0
         for coord in coordinates
@@ -36,7 +33,7 @@ struct VNum{T}
 
         ϕ(mag, coordinates)
     end
-"""
+
 
     Base.:+(a::VNum, b::VNum) = ϕ(sqrt(abs(a) ^ 2 + abs(b) ^ 2 + 2 * proj(a, b)), broadcast((x, y) -> (x * abs(a) + y * abs(b) / (abs(a) + abs(b)), a.angles, b.angles)))
     Base.:-(a::VNum, b::VNum) = ϕ(sqrt(abs(a) ^ 2 - abs(b) ^ 2 - 2 * proj(a, b)), broadcast((x, y) -> (x * abs(a) - y * abs(b) / (abs(a) - abs(b)), a.angles, b.angles)))
@@ -56,6 +53,9 @@ struct VNum{T}
     Base.:/(a::Number, b::VNum) = ϕ(b) / a
 end
 
+ϕ(n) = ϕ(n, n < 0 ? [pi] : [0])
+ϕ(mag, angles::Vector) = VNum(mag, angles)
+ϕ(mag, angles...) = VNum(mag, angles...)
 sangle(a::VNum) = a.angles[1]
 Base.abs(a::VNum) = a.mag
 proj(a::VNum, b::VNum) = abs(a) * abs(b) * cos(sangle(b) - sangle(a))

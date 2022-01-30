@@ -2,17 +2,17 @@ module VPlot
     export plotv
 
     using PyPlot
-    import Main.BMath
+    import ..Math
 
 
     function plotv(points::Vector; precision=10, Title="Math Plot", xlbl="X", ylbl="Y")
         xvals = Float64[]
         yvals = Float64[]
         for point in points
-            if BMath.dim_count(point) != 1
+            if Math.dim_count(point) != 1
                 error("Cannot Plot Due to way to many dimensions! Needs to be 1")
             end
-            c = BMath.cartesian(point)
+            c = Math.cartesian(point)
             push!(xvals, round(c[1], digits=precision))
             push!(yvals, round(c[2], digits=precision))
         end
@@ -30,10 +30,10 @@ module VPlot
         zvals = Float64[]
         for i in 1:length(points)
             point = points[i]
-            if VNum.dim_count(point) != 1
+            if Math.dim_count(point) != 1
                 error("Cannot Plot Due to way to many dimensions! Needs to be 1")
             end
-            c = BMath.cartesian(point)
+            c = Math.cartesian(point)
             push!(xvals, round(inputs[i], digits=precision))
             push!(yvals, round(c[1], digits=precision))
             push!(zvals, round(c[2], digits=precision))
