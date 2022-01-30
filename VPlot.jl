@@ -9,9 +9,6 @@ module VPlot
         xvals = Float64[]
         yvals = Float64[]
         for point in points
-            if Math.dim_count(point) != 1
-                error("Cannot Plot Due to way to many dimensions! Needs to be 1")
-            end
             c = Math.cartesian(point)
             push!(xvals, round(c[1], digits=precision))
             push!(yvals, round(c[2], digits=precision))
@@ -30,9 +27,6 @@ module VPlot
         zvals = Float64[]
         for i in 1:length(points)
             point = points[i]
-            if Math.dim_count(point) != 1
-                error("Cannot Plot Due to way to many dimensions! Needs to be 1")
-            end
             c = Math.cartesian(point)
             push!(xvals, round(inputs[i], digits=precision))
             push!(yvals, round(c[1], digits=precision))

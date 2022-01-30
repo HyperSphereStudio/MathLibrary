@@ -1,12 +1,12 @@
 include("Math.jl")
 
 using Main.Math
-using Main.Math.VPlot
 
-pts = []
-
-for i in 1.0:500.0
-    push!(pts, ϕ(i) * ϕ(i, pi))
+function test()  
+    println(ϕ(6.0) - ϕ(5.0, pi / 2))
+    println(ϕ(6.0) + ϕ(5.0, pi / 2))
 end
 
-Main.Math.VPlot.plotv(pts)
+test()
+
+

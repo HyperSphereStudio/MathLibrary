@@ -5,8 +5,17 @@ struct VNum{T}
     mag::T
     angles::Vector{T}
 
-    VNum(mag::T, angles::Vector{T}) where T = mag < 0 ? new{T}(-mag, (angles .+ pi) .% (2 * pi)) : new{T}(mag, (angles) .% (2 * pi))
-    VNum(mag::T, angles...) where T = VNum(mag, collect(angles))
+    function VNum(mag::T, angles::Vector{T}) where T
+        for i in eachindex(angles)
+            if mag < 0
+                angles[i] += pi
+            end
+            angles[i] = (angles[i] < 0 ? angles[i] + 2 * pi : angles[i]) % (2 * pi)
+        end
+        new{T}(abs(mag), angles)
+    end
+
+    VNum(mag::T, angles...) where T = VNum(mag, T[item for item in angles])
 
 
     function VNum(coordinates::Vector{T}) where T
@@ -34,26 +43,41 @@ struct VNum{T}
         ϕ(mag, coordinates)
     end
 
-
-    Base.:+(a::VNum, b::VNum) = ϕ(sqrt(abs(a) ^ 2 + abs(b) ^ 2 + 2 * proj(a, b)), broadcast((x, y) -> (x * abs(a) + y * abs(b) / (abs(a) + abs(b)), a.angles, b.angles)))
-    Base.:-(a::VNum, b::VNum) = ϕ(sqrt(abs(a) ^ 2 - abs(b) ^ 2 - 2 * proj(a, b)), broadcast((x, y) -> (x * abs(a) - y * abs(b) / (abs(a) - abs(b)), a.angles, b.angles)))
-    Base.:*(a::VNum, b::VNum) = ϕ(abs(a) * abs(b), broadcast((x, y) -> x + y, a.angles, b.angles))
-    Base.:/(a::VNum, b::VNum) = ϕ(abs(a) / abs(b), broadcast((x, y) -> x - y, a.angles, b.angles))
+    "Solution to adding vectors"
+    function Base.:+(a::VNum, b::VNum)
+        c = sqrt(abs(a) ^ 2 + abs(b) ^ 2 + 2 * proj(a, b))
+        ϕ(c, broadcast((x, y) -> asin((abs(b) / c) * sin(pi - (y - x))) + x, a.angles, b.angles))
+    end
     
-    Base.:^(a::VNum, b::Number) = ϕ(abs(a) ^ b, a.angles .^ b)
-    Base.:^(a::VNum, b::Number) = ϕ(abs(a) * b, a.angles)
-    Base.:^(b::Number, a::VNum) = ϕ(abs(a) * b, a.angles)
+    "Solution to subtracting vectors"
+    function Base.:-(c::VNum{T}, a::VNum{T}) where T
+        b = sqrt(abs(c) ^ 2 + abs(a) ^ 2 - 2 * proj(c, a))
+        (b == 0) && return ϕ(T(0), zeros(T, dim_count(c)))
+        ϕ(b, broadcast((x, y) -> (pi - asin(sin(x - y) * abs(c) / b) + y), c.angles, a.angles))
+    end 
+
+    Base.:*(a::VNum, b::VNum) = ϕ(abs(a) * abs(b), a.angles + b.angles)
+    Base.:/(a::VNum, b::VNum) = ϕ(abs(a) / abs(b), a.angles - b.angles)
+    
+
+    Base.:^(a::VNum, b::Number) = ϕ(abs(a) ^ b, a.angles .* b)
     Base.:+(a::VNum, b::Number) = a + ϕ(b)
-    Base.:+(a::Number, b::VNum) = a + ϕ(b)
     Base.:-(a::VNum, b::Number) = a - ϕ(b)
-    Base.:-(a::Number, b::VNum) = ϕ(b) - a
     Base.:*(a::VNum, b::Number) = a * ϕ(b)
-    Base.:*(a::Number, b::VNum) = ϕ(b) * a
     Base.:/(a::VNum, b::Number) = a / ϕ(b)
-    Base.:/(a::Number, b::VNum) = ϕ(b) / a
+    
+    Base.:/(b::Number, a::VNum) = ϕ(b) / a
+    Base.:*(b::Number, a::VNum) = ϕ(b) * a
+    Base.:-(b::Number, a::VNum) = ϕ(b) - a
+    Base.:+(b::Number, a::VNum) = a + ϕ(b)
+    Base.:^(b::Number, a::VNum) = ϕ(b) ^ a
+    
+    Base.string(a::VNum) = "ϕ($(a.mag), $(a.angles))\t≈\tCartesian$(cartesian(a))" 
+    Base.show(io::IO, a::VNum) = show(io, string(a))
+    Base.print(io::IO, a::VNum) = print(io, string(a))
 end
 
-ϕ(n) = ϕ(n, n < 0 ? [pi] : [0])
+ϕ(n::T) where T = VNum(n, n < 0 ? T[pi] : T[0])
 ϕ(mag, angles::Vector) = VNum(mag, angles)
 ϕ(mag, angles...) = VNum(mag, angles...)
 sangle(a::VNum) = a.angles[1]
